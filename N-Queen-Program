@@ -1,0 +1,132 @@
+#include <iostream>
+#include <stack>
+using namespace std;
+
+bool valPos(int i, int j, int** board, int n) {
+    //check i and j row and column if board doesnt contain a 1
+    for (int alpha = 0; alpha < n; alpha++){//simplify into checking both!
+        if (board[i][alpha] == 1 || board[alpha][j] == 1) return false;
+    }
+  
+    //upper left diagonal checker
+    for (int diag = 1; i-diag >= 0 && j-diag >= 0; diag++){
+        if (board[i-diag][j-diag] == 1) return false;
+    }
+    //lower right diagonal checker
+    for (int diag = 1; i+diag < n && j + diag < n; diag++){
+        if (board[i+diag][j+diag] == 1) return false;
+    }
+    //lower left diagonal checker
+    for (int diag = 1; i+diag < n && j - diag >= 0; diag++){
+        if (board[i+diag][j-diag] == 1) return false;
+    }
+    //upper right diagonal checker
+    for (int diag = 1; i-diag >= 0 && j + diag < n; diag++){
+        if (board[i-diag][j+diag] == 1) return false;
+    }
+  
+    return true;//if passes tests
+}
+
+void printAll(int** board, int n){
+    int Q = 0;
+    cout<<"Queen Positions: "<<endl;
+    for (int i = 0; i < n; i++){
+        for(int j = 0; j < n; j++){
+            if(board[i][j] == 1) cout<<"Queen " << ++Q << " at (" << i+1 << ", " << j+1 << ")" << endl;
+        }
+    }
+    cout<<endl<<endl;
+
+    cout<<"Board Position:" <<endl;
+    for (int i = 0; i < n; i++){
+        for(int j = 0; j < n; j++){
+            (i+j)%2 == 0 ? board[i][j] == 1? cout<<"♛ ": cout<<"⬜" : board[i][j] == 1? cout<<"♕ ": cout<<"⬛";
+        }
+        cout<<endl;
+    }
+}
+
+int main() {
+    stack<int> row;
+    stack<int> col;
+    bool notFound = true;
+  
+    int n;
+    int Q = 0;
+    cout << "Enter board size nxn: ";
+    cin >> n;
+
+    if(n==1){
+        cout << "Arbitrary Solution, will not print it out";
+        exit(EXIT_SUCCESS);
+    }
+    if(n < 4){
+        cout<<"No solutions exist for this board size."<<endl;
+        exit(EXIT_SUCCESS);
+    }
+    // Dynamic allocation of the board: to be more accessible/unrestricted in function
+    //https://www.geeksforgeeks.org/how-to-declare-a-2d-array-dynamically-in-c-using-new-operator/
+    int** board = new int*[n];
+    for (int i = 0; i < n; ++i) {
+        board[i] = new int[n];
+    }
+
+    int backTrackRow = 0;
+    int backTrackCol = 0;
+    bool firstEnter = true;
+    
+    do{
+      if(board[backTrackRow][backTrackCol] == 0 && firstEnter!= true){
+        //removed a value from the stack, start from next valid position
+        if(backTrackCol == n-1){//row should not be greater than n-1
+          backTrackCol = 0;  
+          backTrackRow++;
+        }else{
+            backTrackCol++;
+        }
+      }else{//there is a value there start from beginning for next queen
+          backTrackRow = 0;
+          backTrackCol = 0;
+          firstEnter = false;
+      }
+      for (int i = backTrackRow; i < n && notFound; i++) {
+          for (int j = backTrackCol; j < n && notFound; j++) {
+              // Check for position before adding it to the stack
+              if (valPos(i, j, board, n)) {
+                  // If valid position, mark board and push to stacks
+                  board[i][j] = 1;
+                  row.push(i);
+                  col.push(j);
+                  notFound = false;
+                  Q++;//remember to decrement when popping queens
+              }
+          }
+      }
+      //if notFound is still true, meaning we need to pop from stacks and move to next viable position
+      if (notFound){
+          board[row.top()][col.top()] = 0;
+          backTrackRow = row.top();
+          backTrackCol = col.top();
+          row.pop();
+          col.pop(); 
+          Q--;
+      }
+      notFound = true;
+    }while(Q<n);//do while loop is the algorithm!?
+
+    //print out board layout and queen positions
+    if(row.empty()){
+        cout<<"No solution exists"<<endl;
+    }else{
+        cout<<"\nSolution Exists! Print out Board Layout and Queen Positions:"<<endl<<endl;
+        printAll(board,n);
+    }
+  
+    for (int i = 0; i < n; ++i) {
+        delete[] board[i];
+    }
+    delete[] board;
+
+    return 0;
+}
